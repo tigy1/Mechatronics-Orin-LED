@@ -64,7 +64,7 @@ static void MX_USART1_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t RxColor[13]; //uart buffer
-rgb_color realRGB = {138, 222, 255}; //rgb values
+rgb_color realRGB = {255, 255, 255}; //rgb values
 rgb_color lighterRGB = {0, 0, 0}; //lighter version of rgb values for chase
 
 uint8_t test2[48]; //test array only
@@ -84,14 +84,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart){
 //set lighterRGB struct variant
 	//change_lighter(&realRGB);
 
-	//all_specific_led(leds, NUMBER_OF_LEDS, realRGB, 20);
+	all_specific_led(leds, NUMBER_OF_LEDS, realRGB, 20);
 
 	HAL_UART_Receive_IT(&huart1, RxColor, 12);
 }
-
-void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim){
-}
-
 
 /* USER CODE END 0 */
 
@@ -134,6 +130,9 @@ int main(void)
 
   HAL_TIM_PWM_Start_DMA(&htim2, TIM_CHANNEL_1, (uint32_t*)leds, NUMBER_OF_LEDS * 24 + 2*24);
   rgb_color zeroRGB = {0, 0, 0};
+  for(int i = 0; i < NUMBER_OF_LEDS; i++){
+	  set_specific_led(leds, i, realRGB, 44);
+  }
 
   /* USER CODE END 2 */
 
@@ -141,29 +140,29 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  //flashing onboard LED for testing
-	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
-	  HAL_Delay(200);
-	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 1);
-	  HAL_Delay(200);
+	  //flashing onboard LED for testing, don't turn on at same time as chase pattern
+//	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
+//	  HAL_Delay(100);
+//	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 1);
+//	  HAL_Delay(100);
 
 	  //for turning off LEDS w/ uart if you send 0 0 0 values, will prob change
 //	  if(realRGB.r == 1 && realRGB.g == 0 && realRGB.b == 0){
 //		  HAL_TIM_PWM_Stop_DMA(&htim2, TIM_CHANNEL_1);
 //	  }
 
-	  //chasing pattern w/ 3 separate colors incrementing
-	  for(int alt = 0; alt < 3; alt++){ //switches odd & even pattern
-		  for(int i = 0; i < NUMBER_OF_LEDS; i++){
-			  if((i + alt) % 3 == 0){ //even & odd leds are diff color & alternate
-				  set_specific_led(leds, i, realRGB, 44);
-			  }
-			  else{
-				  set_specific_led(leds, i, zeroRGB, 44);
-			  }
-		  }
-		  HAL_Delay(100);
-	  }
+//	  chasing pattern w/ 3 separate colors incrementing
+//	  for(int alt = 0; alt < 3; alt++){ //switches odd & even pattern
+//		  for(int i = 0; i < NUMBER_OF_LEDS; i++){
+//			  if((i + alt) % 3 == 0){ //even & odd leds are diff color & alternate
+//				  set_specific_led(leds, i, realRGB, 20);
+//			  }
+//			  else{
+//				  set_specific_led(leds, i, zeroRGB, 20);
+//			  }
+//		  }
+//		  HAL_Delay(100);
+//	  }
   }
     /* USER CODE END WHILE */
 
