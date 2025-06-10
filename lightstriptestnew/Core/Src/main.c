@@ -34,6 +34,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define NUMBER_OF_LEDS 7 //configure to # of leds
+#define BRIGHTNESS 20 //configure value from 0-44, 0 = dimmest, 44 = brightest
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,6 +50,8 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 led leds[NUMBER_OF_LEDS + 2]; //dma data send buffer
+uint8_t RxColor[13]; //uart receive buffer
+rgb_color realRGB; //LED lights as RGB values
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,32 +66,21 @@ static void MX_USART1_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint8_t RxColor[13]; //uart buffer
-rgb_color realRGB = {255, 255, 255}; //rgb values
-rgb_color lighterRGB = {0, 0, 0}; //lighter version of rgb values for chase
-
-uint8_t test2[48]; //test array only
-
-int indx = 0;
-
-void change_lighter(const rgb_color *real){
-	float brighness = 0.5;
-		lighterRGB.r = (uint8_t) real->r * brighness;
-		lighterRGB.g = (uint8_t) real->g * brighness;
-		lighterRGB.b = (uint8_t) real->b * brighness;
-}
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart){
 	sscanf(RxColor, "%u %u %u\n", &realRGB.r, &realRGB.g, &realRGB.b);
-
-//set lighterRGB struct variant
-	//change_lighter(&realRGB);
-
 	all_specific_led(leds, NUMBER_OF_LEDS, realRGB, 20);
-
 	HAL_UART_Receive_IT(&huart1, RxColor, 12);
 }
 
+void initialize(){
+	realRGB.r = 0;
+	realRGB.g = 0;
+	realRGB.b = 0;
+	all_specific_led(leds, NUMBER_OF_LEDS, realRGB, BRIGHTNESS);
+	HAL_UART_Receive_IT(&huart1, RxColor, 12); //edit for receiving preset colors?
+	HAL_TIM_PWM_Start_DMA(&htim2, TIM_CHANNEL_1, (uint32_t*)leds, NUMBER_OF_LEDS * 24 + 2*24); //initializes continuous DMA
+}
 /* USER CODE END 0 */
 
 /**
@@ -97,10 +89,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef* huart){
   */
 int main(void)
 {
-
   /* USER CODE BEGIN 1 */
-  uint16_t led_pos_counter = 0;
-	//patterns
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -124,45 +113,19 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_UART_Receive_IT(&huart1, RxColor, 12);
-  //reset_all_leds(leds, NUMBER_OF_LEDS);
-  //set_all_leds(leds, NUMBER_OF_LEDS);
-
-  HAL_TIM_PWM_Start_DMA(&htim2, TIM_CHANNEL_1, (uint32_t*)leds, NUMBER_OF_LEDS * 24 + 2*24);
-  rgb_color zeroRGB = {0, 0, 0};
-  for(int i = 0; i < NUMBER_OF_LEDS; i++){
-	  set_specific_led(leds, i, realRGB, 44);
-  }
-
+  initialize();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  //flashing onboard LED for testing, don't turn on at same time as chase pattern
-//	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
-//	  HAL_Delay(100);
-//	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 1);
-//	  HAL_Delay(100);
-
-	  //for turning off LEDS w/ uart if you send 0 0 0 values, will prob change
-//	  if(realRGB.r == 1 && realRGB.g == 0 && realRGB.b == 0){
-//		  HAL_TIM_PWM_Stop_DMA(&htim2, TIM_CHANNEL_1);
-//	  }
-
+	  //for turning off LEDS w/ uart, will stop DMA & stop accepting data just in case lol
+	  if(realRGB.r == 1 && realRGB.g == 0 && realRGB.b == 0){
+		  HAL_TIM_PWM_Stop_DMA(&htim2, TIM_CHANNEL_1);
+	  }
 //	  chasing pattern w/ 3 separate colors incrementing
-//	  for(int alt = 0; alt < 3; alt++){ //switches odd & even pattern
-//		  for(int i = 0; i < NUMBER_OF_LEDS; i++){
-//			  if((i + alt) % 3 == 0){ //even & odd leds are diff color & alternate
-//				  set_specific_led(leds, i, realRGB, 20);
-//			  }
-//			  else{
-//				  set_specific_led(leds, i, zeroRGB, 20);
-//			  }
-//		  }
-//		  HAL_Delay(100);
-//	  }
+	  chase_pattern_LED(leds, NUMBER_OF_LEDS, realRGB, BRIGHTNESS);
   }
     /* USER CODE END WHILE */
 

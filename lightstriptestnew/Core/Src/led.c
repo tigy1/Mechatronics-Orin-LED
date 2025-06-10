@@ -98,3 +98,18 @@ void all_specific_led(led* leds, uint16_t number_leds, rgb_color color, int brig
 	}
 }
 
+void chase_pattern_LED(led* leds, uint16_t number_leds, rgb_color color, int brightness){
+  rgb_color zeroRGB = {0, 0, 0};
+  for(int alt = 0; alt < 3; alt++){ //switches odd & even pattern
+	  for(int i = 0; i < number_leds; i++){
+		  if((i + alt) % 3 == 0){ //even & odd leds are diff color & alternate
+			  set_specific_led(leds, i, color, brightness);
+		  }
+		  else{
+			  set_specific_led(leds, i, zeroRGB, brightness);
+		  }
+	  }
+	  HAL_Delay(100);
+  }
+}
+

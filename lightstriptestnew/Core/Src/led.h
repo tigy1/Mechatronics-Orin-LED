@@ -30,5 +30,6 @@ void reset_all_leds(led* leds, uint16_t number_leds);
 void set_all_leds(led* leds, uint16_t number_leds);
 void set_specific_led(led* leds, uint16_t led_position, rgb_color color, int brightness);
 void all_specific_led(led* leds, uint16_t number_leds, rgb_color color, int brightness);
+void chase_pattern_LED(led* leds, uint16_t number_leds, rgb_color color, int brightness);
 
 #endif
