@@ -85,7 +85,7 @@ The script will validate input and send it via UART to the STM32 board.
 
 ---
 
-## 🧩 Code Highlights
+## Code Highlights
 
 ### UART Packet Format
 
